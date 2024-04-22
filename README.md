@@ -1,3 +1,9 @@
+This script is used for UMVC3 modding mainly to create additional skin slots, or to move skin slots to other slots.
+
+
+
+
+
 1. Place .arc file in this folder, currently everything but 00-02 is supported, currently you cannot move skin slots from double digit slots downwards, but you can upwards. (i.e you can move skin slots from 05 to 15, but not 15 to 05)
 NOTE: Keep a copy of the original .arc before modifying as it WILL be replaced at the end of the script
 2. Run script
