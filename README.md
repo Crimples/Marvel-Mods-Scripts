@@ -12,27 +12,50 @@ NOTE: Keep a copy of the original .arc before modifying as it WILL be replaced a
 Common Problems:
 
 -Script closed without any output?
+
 	Incorrect CharacterName or SkinSlots specified, rarely it just happens sometimes, try again
+ 
 -.arc was not modified?
+
 	Invalid parameter provided (see list of known issues)
+ 
 -Script says Python 3 required?
+
 	Download Python 3 or later
+ 
 -Game unable to pick slot?
+
 	Ensure that the characters slots are enabled under Characters.ini or ColorExpansion.ini
+ 
 -Character portraits are grey when picking character?
+
 	Modified files changed core components (usually formatting error)
+ 
 -Game crashes when picking character slot or loading game?
+
 	-Note error message
+ 
 -Game has incorrect textures loading?
+
 	Skin Slot has uncommonly named files
+ 
 -Any other issue?
+
 	Ensure its not part of known issues
+ 
 
 Known Issues:
+
 -You cannot move skin slots from double digit slots downwards
+
 -Characters with numbers in their name might break the script (STR29 i.e)
+
 -Script only works on Python 3 and later
+
 -Script does not work past skin slot 99 and will never work for skins 00-02
+
 -Script has a purposeful delay that wastes time to allow script to finish making changes
+
 -Silver and Gold Character Slots might break due to difference in naming conventions (Confirmed for Arthur and Wesker)
+
 -Script does not account for certain variables that are rare (skinslot tied textures that require renaming) (Might have been fixed, needs more testing)
