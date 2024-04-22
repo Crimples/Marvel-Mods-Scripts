@@ -1,4 +1,4 @@
-##Version 1.0
+##Version 1.1
 
 import subprocess
 import os
@@ -246,11 +246,13 @@ def update_file_content(file_path, old_value, new_value):
         elif line.strip().startswith('ui'):  # Check if the line starts with 'UI'
             updated_line = line.replace(old_value, new_value, 1)  # Replace only the first occurrence
             updated_lines.append(updated_line)
-        elif line.strip().endswith(('.ean', '.lmt', '.5A7E5D8A', '.0026E7FF', '.3E363245', '.326F732E')) and '\\' + old_value not in line:
+        elif line.strip().endswith(('.ean', '.0026E7FF', '.3E363245', '.326F732E')) and '\\' + old_value not in line:
             # If the line ends with above extensions and does not contain a backslash before the variable, keep it unchanged
             updated_lines.append(line)
         elif re.search(r'\b(000[1-9])\b', line) and not re.search(r'\.(lmt|5A7E5D8A)', line):
             # If the line contains 0001-0009 and ends not with .lmt or .5A7E5D8A, keep it unchanged
+            updated_lines.append(line)
+        elif line.strip().endswith(('.lmt', '.5A7E5D8A')):
             updated_lines.append(line)
         elif line.strip().endswith('.tex'):
             # If the line ends with the specified extension, replace all instances of "old_value"p
@@ -311,7 +313,7 @@ if len(CurrentNumberClean) == len(FirstNumberClean):
                     content = file.read()
 
                 # Define the regular expression pattern to match SecondCurrentNumberClean not followed by a null byte
-                pattern = re.compile(re.escape(bytes(SecondCurrentNumberClean, 'ascii')) + rb'(?!' + re.escape(b'\x00') + rb')')
+                pattern = re.compile(re.escape(bytes(SecondCurrentNumberClean, 'ascii')) + rb'(?!' + re.escape(b'\x00') + rb'|_StaJ)')
 
                 # Replace SecondCurrentNumberClean with SecondNumberClean only if it doesn't occur before a null byte
                 content = pattern.sub(bytes(SecondNumberClean, 'ascii'), content)
