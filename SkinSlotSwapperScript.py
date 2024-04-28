@@ -1,4 +1,4 @@
-##Version 1.1
+##Version 1.2
 
 import subprocess
 import os
@@ -122,7 +122,7 @@ for root, dirs, files in os.walk(current_directory):
         # Get the full path of the file
         file_path = os.path.join(root, filename)
         # Check if the file is not an executable and if its name contains SecondCurrentNumber at the beginning
-        if not filename.endswith('.exe') and filename.startswith(SecondCurrentNumberClean):
+        if not filename.endswith(('.exe', '.lmt', '.5A7E5D8A')) and filename.startswith(SecondCurrentNumberClean):
             # Construct the new filename by replacing SecondCurrentNumber with SecondNumber
             new_filename = SecondNumberClean + filename[len(SecondCurrentNumberClean):]
             # Construct the new file path
@@ -150,6 +150,9 @@ for root, dirs, files in os.walk(current_directory):
         print("File name:", file_name)
         # Print file name and relevant variables for debugging
         # Check if the file name contains the substring "eftpathlist" followed by SecondCurrentNumber
+        # Check if the filename contains ".lmt" or ".5A7E5D8A"
+        if ".lmt" in file_name or ".5A7E5D8A" in file_name:
+            continue  # Ignore files with ".lmt" or ".5A7E5D8A" in the filename
         if "eftpathlist" + SecondCurrentNumber in file_name:
             # Construct the new file name by replacing SecondCurrentNumber with SecondNumber
             new_file_name = file_name.replace(SecondCurrentNumber, SecondNumber)
@@ -158,14 +161,16 @@ for root, dirs, files in os.walk(current_directory):
             # Rename the file
             os.rename(os.path.join(root, filename), new_file_path)
             print(f"Renamed: {os.path.join(root, filename)} to {new_file_path}")
-        if SecondCurrentNumberClean + "p" in file_name:
-            # If the line ends with the specified extension, replace all instances of "old_value"p
-             # Construct the new file name by replacing SecondCurrentNumber with SecondNumber
+        # Check if the file name contains the substring for SecondCurrentNumberClean condition
+        elif SecondCurrentNumberClean in file_name and file_name.endswith("p"):
+            # Construct the new file name by replacing SecondCurrentNumberClean with SecondNumberClean
             new_file_name = file_name.replace(SecondCurrentNumberClean, SecondNumberClean)
             # Construct the new file path
             new_file_path = os.path.join(root, new_file_name + file_extension)
+            # Rename the file
             os.rename(os.path.join(root, filename), new_file_path)
             print(f"Renamed: {os.path.join(root, filename)} to {new_file_path}")
+
 # Iterate over all directories and subdirectories
 for root, dirs, files in os.walk(current_directory):
     # Iterate over each directory in the current directory
@@ -290,10 +295,89 @@ update_file_content(file_path, CurrentNumber, FirstNumber)
 # Update the progress bar
 progress_bar(6, total_tasks)
 
+########################################################################################
+## Step 7 - Modify files that contain mentions to efl's\mod's if specifically .arc 09 ##
+########################################################################################
+
+# Get the current directory
+current_directory = os.getcwd()
+
+# Define file extensions to search for
+extensions = ['.357EF6D4', '.448BBDD4']
+extensions2 = ['.mrl', '.efl']
+
+if (SecondCurrentNumberClean) == str(10):
+
+    # Iterate over all files in the current directory and its subdirectories
+    for root, dirs, files in os.walk(current_directory):
+        for filename in files:
+            if filename.endswith(tuple(extensions)):
+                file_path = os.path.join(root, filename)
+                print(f"Processing file: {file_path}")
+
+                # Read the content of the file in binary mode
+                with open(file_path, 'r+b') as file:
+                    content = bytearray(file.read())
+
+                    # Find all instances of SecondCurrentNumber followed by 3 numbers
+                    index = content.find(bytes(SecondCurrentNumber, 'ascii'))
+                    while index != -1:
+                        # Check if the index is followed by 3 digits
+                        if index + len(SecondCurrentNumber) + 3 <= len(content) and content[index + len(SecondCurrentNumber):index + len(SecondCurrentNumber) + 3].isdigit():
+                            # Replace SecondCurrentNumber with SecondNumber
+                            content[index:index + len(SecondNumber)] = bytes(SecondNumber, 'ascii')
+                        # Find the next occurrence of SecondCurrentNumber
+                        index = content.find(bytes(SecondCurrentNumber, 'ascii'), index + 1)
+
+                    # Write the modified content back to the file
+                    file.seek(0)
+                    file.write(content)
+
+                print(f"Modified: {file_path}")
+
+            elif filename.endswith(tuple(extensions2)):
+                file_path = os.path.join(root, filename)
+                print(f"Processing file: {file_path}")
+                # Read the content of the file in binary mode
+                with open(file_path, 'rb') as file:
+                    content = file.read()
+    
+                # Find all occurrences of the bytes b'\x63\x6D\x6E\x5C' in the content
+                cmn_indices = [i for i, x in enumerate(content) if content[i:i+4] == b'\x63\x6D\x6E\x5C']
+                # Find all occurrences of the bytes b'\x74\x65\x78\x5C' in the content
+                tex_indices = [i for i, x in enumerate(content) if content[i:i+4] == b'\x74\x65\x78\x5C']
+                # Identify all instances of SecondCurrentNumberClean followed by "p" or by 3 numbers
+                second_current_indices_clean = [i for i in range(len(content) - len(SecondCurrentNumberClean)) if content[i:i+len(SecondCurrentNumberClean)] == bytes(SecondCurrentNumberClean, 'ascii') and (content[i+len(SecondCurrentNumberClean)] == ord('p') or all(chr(content[i+len(SecondCurrentNumberClean)+j]).isdigit() for j in range(3)))]
+    
+                # Replace SecondCurrentNumberClean with SecondNumber as needed
+                index_offset = 0
+                for index in second_current_indices_clean:
+                    adjusted_index = index + index_offset
+                    should_replace = True
+                    for cmn_index in cmn_indices:
+                        if abs(cmn_index - adjusted_index) < 20:
+                            should_replace = False
+                            break
+                    # Check if the current index is within 20 bytes of b'\x74\x65\x78\x5C'
+                    for tex_index in tex_indices:
+                        if abs(tex_index - adjusted_index) < 20:
+                            should_replace = False
+                            break
+                    if should_replace and (adjusted_index == 0 or not content[adjusted_index - 1:adjusted_index].isdigit()):
+                        content = content[:adjusted_index] + bytes(SecondNumberClean, 'ascii') + content[adjusted_index+len(SecondCurrentNumberClean):]
+                        # Adjust the index offset after replacement
+                        index_offset += len(SecondNumberClean) - len(SecondCurrentNumberClean)
+    
+                # Write the modified content back to the file
+                with open(file_path, 'wb') as file:
+                    file.write(content)
+                print(f"Modified: {file_path}")
+
 ################################################################################
 ## Step 7a - Modify files that contain mentions to efl's\mod's if same length ##
 ################################################################################
-if len(CurrentNumberClean) == len(FirstNumberClean):
+
+elif len(CurrentNumberClean) == len(FirstNumberClean):
 
     # Get the current directory
     current_directory = os.getcwd()
