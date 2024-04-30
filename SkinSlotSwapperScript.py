@@ -1,4 +1,4 @@
-##Version 1.2
+##Version 1.3
 
 import subprocess
 import os
@@ -173,11 +173,17 @@ for root, dirs, files in os.walk(current_directory):
 
 # Iterate over all directories and subdirectories
 for root, dirs, files in os.walk(current_directory):
+    # Check if the current directory is the top-level directory
+    if root == current_directory:
+        # Remove the current directory from the list of directories to avoid modifying it
+        dirs[:] = [d for d in dirs if d != os.path.basename(root)]
+        continue  # Skip further processing for the top-level directory
+    
     # Iterate over each directory in the current directory
     for dirname in dirs:
-        # Check if the directory name contains SecondCurrentNumber
+        # Check if the directory name contains SecondCurrentNumberClean
         if SecondCurrentNumberClean in dirname:
-            # Construct the new directory name by replacing SecondCurrentNumber with SecondNumber
+            # Construct the new directory name by replacing SecondCurrentNumberClean with SecondNumberClean
             new_dirname = dirname.replace(SecondCurrentNumberClean, SecondNumberClean)
             # Construct the new directory path
             new_dir_path = os.path.join(root, new_dirname)
