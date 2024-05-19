@@ -1,4 +1,4 @@
-##Version 1.3
+##Version 1.4
 
 import subprocess
 import os
@@ -12,24 +12,24 @@ import shutil
 ###############
 ## Pre-Setup ##
 ###############
-# Check Python versioning
-if sys.version_info[0] < 3:
-    raise Exception("Python 3 or a more recent version is required.")
-try:
-
+#Function for Check Python Version
+def check_python_version():
+    if sys.version_info[0] < 3:
+        raise Exception("Python 3 or a more recent version is required.")
     print("Python version is 3 or higher. Continuing with the program...")
-except Exception as e:
-    print("Error:", e)
 
-# Define a function to display the progress bar
+#Function for setting up progress bar
 def progress_bar(current, total, bar_length=50):
     percent = current / total
     arrow = '=' * int(round(percent * bar_length) - 1)
     spaces = ' ' * (bar_length - len(arrow))
     print('\rProgress: [{0}] {1}/{2}'.format(arrow + spaces, current, total), end='', flush=True)
+
 total_tasks = 9
-for i in range(1, total_tasks + 1):
-    time.sleep(0.1)
+
+#Run Python Function
+check_python_version()
+
 
 
 ######################################
@@ -44,38 +44,22 @@ def get_valid_skin_slot(prompt):
         else:
             print("Invalid input. Skin slots '00', '01', and '02' are not allowed.")
 
-# Prompt the user to input CharacterName
-CharacterName = input("Enter Character Name: ")
-# Prompt the user to input CurrentNumber
-CurrentNumber = get_valid_skin_slot("Enter current skin slot (e.g., 03, 04, 05, ...): ")
-# Convert CurrentNumber to an integer and add 1 to it
-SecondCurrentNumber = int(CurrentNumber) + 1
-# Add leading zero if the number is a single digit
-CurrentNumber = str(CurrentNumber).zfill(2)
-# Add leading zero if the number is a single digit
-SecondCurrentNumber = str(SecondCurrentNumber).zfill(2)
-# Prompt the user to input FirstNumber
-FirstNumber = get_valid_skin_slot("Enter requested skin slot (e.g., 03, 04, 05, ...): ")
-# Convert FirstNumber to an integer and add 1 to it
-SecondNumber = int(FirstNumber) + 1
-# Add leading zero if the number is a single digit
-FirstNumber = str(FirstNumber).zfill(2)
-# Add leading zero if the number is a single digit
-SecondNumber = str(SecondNumber).zfill(2)
-#Declared Variables for First/Current Numbers under 10p
+def gather_inputs():
+    CharacterName = input("Enter Character Name: ")
+    CurrentNumber = get_valid_skin_slot("Enter current skin slot (e.g., 03, 04, 05, ...): ")
+    FirstNumber = get_valid_skin_slot("Enter requested skin slot (e.g., 03, 04, 05, ...): ")
+    CurrentNumber = CurrentNumber.zfill(2)
+    FirstNumber = FirstNumber.zfill(2)
+    SecondCurrentNumber = str(int(CurrentNumber) + 1).zfill(2)
+    SecondNumber = str(int(FirstNumber) + 1).zfill(2)
+    return CharacterName, CurrentNumber, SecondCurrentNumber, FirstNumber, SecondNumber
+
+CharacterName, CurrentNumber, SecondCurrentNumber, FirstNumber, SecondNumber = gather_inputs()
+
 FirstNumberClean = str(int(FirstNumber))
 CurrentNumberClean = str(int(CurrentNumber))
-#Declared Variables for Second/Current Numbers under 10p
 SecondNumberClean = str(int(SecondNumber))
 SecondCurrentNumberClean = str(int(SecondCurrentNumber))
-
-# Define variables to check    
-def prompt_and_check_numbers():
-    while True:
-        global CharacterName
-        global CurrentNumber
-        global SecondCurrentNumber
-        global FirstNumber
 
 # Update the progress bar
 progress_bar(1, total_tasks)
@@ -84,6 +68,10 @@ progress_bar(1, total_tasks)
 ## Step 2 - Running .arc against .bat file ##
 #############################################
 
+# Number of retries + delay for searching
+retries = 3
+delay = 2  # Delay in seconds
+
 # Construct the file path with delay for error possibility
 file_path = os.path.join(os.getcwd(), f"{CharacterName}_{CurrentNumber}.arc")
 time.sleep(1.5)
@@ -91,19 +79,25 @@ time.sleep(1.5)
 # Construct the batch file path
 batch_file_path = os.path.join(os.getcwd(), "pc-dmc4se.bat")
 
-# Check if the file exists
-if os.path.exists(file_path):
-    # Check if the batch file exists
-    if os.path.exists(batch_file_path):
-        # Run the batch file with the file path as an argument
-        subprocess.run([batch_file_path, file_path], shell=True)
-        print(f"Opened '{file_path}' with '{batch_file_path}'.")
+# Attempt to find the file_path with retries
+for attempt in range(retries):
+    if os.path.exists(file_path):
+        # Check if the batch file exists
+        if os.path.exists(batch_file_path):
+            # Run the batch file with the file path as an argument
+            subprocess.run([batch_file_path, file_path], shell=True)
+            print(f"Opened '{file_path}' with '{batch_file_path}'.")
+        else:
+            print(f"Batch file '{batch_file_path}' not found.")
+            sys.exit()
+        break  # Exit the loop if the file was found and processed
     else:
-        print(f"Batch file '{batch_file_path}' not found.")
-        sys.exit()
-else:
-    print(f"File '{file_path}' not found.")
-    sys.exit()
+        if attempt < retries - 1:  # Only sleep if there are remaining attempts
+            print(f"File '{file_path}' not found. Retrying in {delay} second(s)...")
+            time.sleep(delay)
+        else:
+            print(f"File '{file_path}' not found after {retries} attempts.")
+            sys.exit()
 
 # Update the progress bar
 progress_bar(2, total_tasks)
@@ -112,24 +106,17 @@ progress_bar(2, total_tasks)
 ## Step 3 - Rename Folder ##
 ############################
 
-# Get the current directory
-current_directory = os.getcwd()
+def rename_folders(current_directory, SecondCurrentNumberClean, SecondNumberClean):
+    for root, dirs, files in os.walk(current_directory):
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            if not filename.endswith('.exe') and filename.startswith(SecondCurrentNumberClean):
+                new_filename = SecondNumberClean + filename[len(SecondCurrentNumberClean):]
+                new_file_path = os.path.join(root, new_filename)
+                os.rename(file_path, new_file_path)
+                print(f"Renamed: {file_path} to {new_file_path}")
 
-# Iterate over all directories and subdirectories
-for root, dirs, files in os.walk(current_directory):
-    # Iterate over each file in the current directory
-    for filename in files:
-        # Get the full path of the file
-        file_path = os.path.join(root, filename)
-        # Check if the file is not an executable and if its name contains SecondCurrentNumber at the beginning
-        if not filename.endswith(('.exe', '.lmt', '.5A7E5D8A')) and filename.startswith(SecondCurrentNumberClean):
-            # Construct the new filename by replacing SecondCurrentNumber with SecondNumber
-            new_filename = SecondNumberClean + filename[len(SecondCurrentNumberClean):]
-            # Construct the new file path
-            new_file_path = os.path.join(root, new_filename)
-            # Rename the file
-            os.rename(file_path, new_file_path)
-            print(f"Renamed: {file_path} to {new_file_path}")
+rename_folders(os.getcwd(), SecondCurrentNumberClean, SecondNumberClean)
 
 # Update the progress bar
 progress_bar(3, total_tasks)
@@ -149,10 +136,15 @@ for root, dirs, files in os.walk(current_directory):
         file_name, file_extension = os.path.splitext(filename)
         print("File name:", file_name)
         # Print file name and relevant variables for debugging
+        # Check if the file name is cmn.cst and FirstNumberClean is "7"
+        if file_name == "cmn" and FirstNumberClean == "7":
+            # Construct the new file path
+            new_file_path = os.path.join(root, "sp.326F732E")
+            # Rename the file
+            os.rename(os.path.join(root, filename), new_file_path)
+            print(f"Renamed: {os.path.join(root, filename)} to {new_file_path}")
+            continue  # Skip further processing for this file
         # Check if the file name contains the substring "eftpathlist" followed by SecondCurrentNumber
-        # Check if the filename contains ".lmt" or ".5A7E5D8A"
-        if ".lmt" in file_name or ".5A7E5D8A" in file_name:
-            continue  # Ignore files with ".lmt" or ".5A7E5D8A" in the filename
         if "eftpathlist" + SecondCurrentNumber in file_name:
             # Construct the new file name by replacing SecondCurrentNumber with SecondNumber
             new_file_name = file_name.replace(SecondCurrentNumber, SecondNumber)
@@ -198,39 +190,30 @@ progress_bar(4, total_tasks)
 ## Step 5 - Modify UI files speficially ##
 ##########################################
 
-#Delay for issue
-time.sleep (1.5) 
+#Function for modyfing UI files
+def modify_ui_files(current_directory, CurrentNumber, FirstNumber):
+    time.sleep(1.5)
+    UIPath = None
 
-# Get the current directory
-current_directory = os.getcwd()
+    for root, dirs, files in os.walk(current_directory):
+        if 'ui' in dirs:
+            UIPath = os.path.join(root, 'ui')
+            break
 
-# Initialize the UI path variable
-UIPath = None
+    if UIPath:
+        for root, dirs, files in os.walk(UIPath):
+            for filename in files:
+                if CurrentNumber in filename:
+                    new_filename = filename.replace(CurrentNumber, FirstNumber)
+                    old_file_path = os.path.join(root, filename)
+                    new_file_path = os.path.join(root, new_filename)
+                    os.rename(old_file_path, new_file_path)
+                    print(f"Renamed: {old_file_path} to {new_file_path}")
+    else:
+        raise FileNotFoundError("No 'ui' folder found in the current directory.")
 
-# Iterate over all directories and subdirectories
-for root, dirs, files in os.walk(current_directory):
-    # Check if 'ui' folder is found
-    if 'ui' in dirs:
-        UIPath = os.path.join(root, 'ui')
-        break
-
-if UIPath:
-    # Iterate over files in the 'ui' folder and its subdirectories
-    for root, dirs, files in os.walk(UIPath):
-        for filename in files:
-            # Check if the file name contains CurrentNumber
-            if CurrentNumber in filename:
-                # Construct the new filename by replacing CurrentNumber with FirstNumber
-                new_filename = filename.replace(CurrentNumber, FirstNumber)
-                # Construct the new file path
-                old_file_path = os.path.join(root, filename)
-                new_file_path = os.path.join(root, new_filename)
-                # Rename the file
-                os.rename(old_file_path, new_file_path)
-                print(f"Renamed: {old_file_path} to {new_file_path}")
-else:
-    print("No 'ui' folder found in the current directory.")
-    sys.exit()
+#Running function
+modify_ui_files(os.getcwd(), CurrentNumber, FirstNumber)
     
 # Update the progress bar
 progress_bar(5, total_tasks)
@@ -257,14 +240,15 @@ def update_file_content(file_path, old_value, new_value):
         elif line.strip().startswith('ui'):  # Check if the line starts with 'UI'
             updated_line = line.replace(old_value, new_value, 1)  # Replace only the first occurrence
             updated_lines.append(updated_line)
-        elif line.strip().endswith(('.ean', '.0026E7FF', '.3E363245', '.326F732E')) and '\\' + old_value not in line:
+        elif line.strip().endswith(('.ean', '.0026E7FF', '.3E363245', '.326F732E','.lmt', '.5A7E5D8A')) and '\\' + old_value not in line:
             # If the line ends with above extensions and does not contain a backslash before the variable, keep it unchanged
             updated_lines.append(line)
         elif re.search(r'\b(000[1-9])\b', line) and not re.search(r'\.(lmt|5A7E5D8A)', line):
             # If the line contains 0001-0009 and ends not with .lmt or .5A7E5D8A, keep it unchanged
             updated_lines.append(line)
-        elif line.strip().endswith(('.lmt', '.5A7E5D8A')):
-            updated_lines.append(line)
+        elif "weapon" in line:
+        # If the word "weapon" occurs in the line, replace the first instance of old_value with new_value
+            updated_lines.append(line.replace(old_value, new_value, 1))    
         elif line.strip().endswith('.tex'):
             # If the line ends with the specified extension, replace all instances of "old_value"p
             updated_line = re.sub(re.escape(old_value) + r'(?=p)', new_value, line)
@@ -297,7 +281,25 @@ update_file_content(file_path, SecondCurrentNumber, SecondNumber)
 update_file_content(file_path, SecondCurrentNumberClean, SecondNumberClean)
 # Update content related to CurrentNumber
 update_file_content(file_path, CurrentNumber, FirstNumber)
-    
+
+# Additional modification based on FirstNumberClean
+if FirstNumberClean == "7":
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    updated_lines = []
+    for line in lines:
+        if "cmn.326F732E" in line:
+            updated_line = line.replace("cmn.326F732E", "sp.326F732E")
+            updated_lines.append(updated_line)
+        else:
+            updated_lines.append(line)
+
+    with open(file_path, 'w') as file:
+        file.writelines(updated_lines)
+
+    print(f"Specific modification for FirstNumberClean='7' applied to '{file_path}'.")
+
 # Update the progress bar
 progress_bar(6, total_tasks)
 
@@ -312,7 +314,7 @@ current_directory = os.getcwd()
 extensions = ['.357EF6D4', '.448BBDD4']
 extensions2 = ['.mrl', '.efl']
 
-if (SecondCurrentNumberClean) == str(10):
+if (SecondCurrentNumberClean) == str(10): 
 
     # Iterate over all files in the current directory and its subdirectories
     for root, dirs, files in os.walk(current_directory):
@@ -383,7 +385,7 @@ if (SecondCurrentNumberClean) == str(10):
 ## Step 7a - Modify files that contain mentions to efl's\mod's if same length ##
 ################################################################################
 
-elif len(CurrentNumberClean) == len(FirstNumberClean):
+elif len(CurrentNumberClean) == len(FirstNumberClean) and (SecondNumberClean) != str(10):
 
     # Get the current directory
     current_directory = os.getcwd()
@@ -454,7 +456,7 @@ elif len(CurrentNumberClean) == len(FirstNumberClean):
 ## Step 7b - Modify files that contain mentions to efl's\mod's if different lengths ##
 ######################################################################################
 
-elif len(CurrentNumberClean) != len(FirstNumberClean):
+elif len(CurrentNumberClean) != len(FirstNumberClean) or (SecondNumberClean) == str(10):
 
     # Get the current directory
     current_directory = os.getcwd()
@@ -538,26 +540,56 @@ except FileNotFoundError:
 # Update the progress bar
 progress_bar(8, total_tasks)
 
-#############################################
-## Step 9 - Cleanup by removing old folder ## ##Commented out for extended testing
-#############################################
+###########################################################
+## Step 9 - Cleanup by removing old folder and .txt file ##
+###########################################################
+
+#Define function for cleaning up remaining files    
+def cleanup_directory_and_file(CharacterName, CurrentNumber):
+    # Construct the folder name
+    folder_name = f"{CharacterName}_{CurrentNumber}"
     
-# Construct the folder name
-#folder_name = f"{CharacterName}_{CurrentNumber}"
+    # Specify the paths to the directory and the .txt file to delete
+    directory_to_delete = os.path.join(os.getcwd(), folder_name)
+    txt_file_to_delete = os.path.join(os.getcwd(), f"{CharacterName}_{CurrentNumber}.arc.txt")
+    
+    # Check if the directory exists
+    if os.path.exists(directory_to_delete) or os.path.exists(txt_file_to_delete):
+        # Prompt the user for confirmation
+        while True:
+            print("")
+            print("Do you want to delete the directory")
+            print(f"'{directory_to_delete}' and '{txt_file_to_delete}'? (y/n): ")
+            confirmation = input().strip().lower()
+            if confirmation == 'y':
+                # Try to remove the directory and file
+                try:
+                    if os.path.exists(directory_to_delete):
+                        shutil.rmtree(directory_to_delete)
+                        print(f"Successfully deleted the directory: {directory_to_delete}")
+                    else:
+                        print(f"Directory does not exist: {directory_to_delete}")
 
-# Specify the path to the directory to delete
-#directory_to_delete = os.path.join(os.getcwd(), folder_name)
+                    if os.path.exists(txt_file_to_delete):
+                        os.remove(txt_file_to_delete)
+                        print(f"Successfully deleted the file: {txt_file_to_delete}")
+                    else:
+                        print(f"File does not exist: {txt_file_to_delete}")
 
-# Check if the directory exists
-#if os.path.exists(directory_to_delete):
-    # Try to remove the directory
-    #try:
-        #shutil.rmtree(directory_to_delete)
-        #print(f"Successfully deleted the directory: {directory_to_delete}")
-    #except OSError as e:
-        #print(f"Error: {directory_to_delete} : {e.strerror}")
-#else:
-    #print(f"Directory does not exist: {directory_to_delete}")
+                    break  # Exit the loop after successful deletion
+                except OSError as e:
+                    print(f"Error: {e.strerror}")
+                    break  # Exit the loop on error
+            elif confirmation == 'n':
+                print("Deletion canceled.")
+                break  # Exit the loop if the user cancels the deletion
+            else:
+                print("Invalid input. Please enter 'y' for Yes or 'n' for No.")
+    else:
+        print(f"Neither directory nor file exists: '{directory_to_delete}', '{txt_file_to_delete}'")
+
+#Run function to cleanup remaining files
+cleanup_directory_and_file(CharacterName, CurrentNumber)
 
 # Update the progress bar
 progress_bar(9, total_tasks)
