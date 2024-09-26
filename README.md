@@ -65,3 +65,7 @@ Known Issues:
 -Silver and Gold Character Slots might break due to difference in naming conventions (Confirmed for Arthur and Wesker)
 
 -Script does not account for certain variables that are rare (skinslot tied textures that require renaming) (Might have been fixed, needs more testing)
+
+-Currently Thing's skin 10 and 11 will not work due to naming conventions and will need to be done manually.
+
+-Due to Talbain file structure, skin 11 needs to manually fix efl's
